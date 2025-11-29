@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sanaré Clínica de Infusión – Encuesta Comercial 2025-2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <!-- Chart.js + plugin de etiquetas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <!-- Firebase compat (App + Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --bg: #050506;
+      --card: #111111;
+      --accent: #c9a28b;
+      --accent-soft: rgba(201,162,139,0.1);
+      --text: #f5f5f5;
+      --muted: #aaaaaa;
+      --border: #2a2a2a;
+      --error: #ff6b6b;
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1a1310 0, #050506 55%);
+      color: var(--text);
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      gap: 18px;
+      position: relative;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      background: rgba(0,0,0,0.55);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(201,162,139,0.25);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand-logo {
+      height: 64px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 12px 25px rgba(0,0,0,0.9));
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .brand-text p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .tag-pill {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(201,162,139,0.5);
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      background: radial-gradient(circle at top, rgba(201,162,139,0.22), rgba(0,0,0,0.7));
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1100px) {
+      main { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .card {
+      background: rgba(0,0,0,0.7);
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-soft);
+      padding: 22px 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .pill-counter {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--accent-soft);
+      border: 1px solid rgba(201,162,139,0.4);
+      font-size: 0.75rem;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      max-height: calc(100vh - 190px);
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .question {
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      padding: 14px 14px 12px;
+      background: linear-gradient(135deg, rgba(201,162,139,0.08), rgba(7,7,7,0.92));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .question small {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+
+    .question-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .option-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.55);
+      cursor: pointer;
+      font-size: 0.78rem;
+      transition: all 0.16s ease-out;
+      color: var(--muted);
+    }
+
+    .option-pill:hover {
+      border-color: rgba(201,162,139,0.65);
+      background: rgba(201,162,139,0.10);
+      color: var(--text);
+    }
+
+    .option-pill input {
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    .option-pill input:checked {
+      border-color: var(--accent);
+      background: radial-gradient(circle at center, var(--accent) 0, var(--accent) 45%, transparent 55%);
+    }
+
+    .option-pill.multiple input { border-radius: 4px; }
+    .option-pill.multiple input:checked { background: var(--accent); }
+    .option-label-text { white-space: nowrap; }
+
+    .field-inline {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .field-inline input[type="text"],
+    .field-inline textarea {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.6);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8rem;
+      resize: vertical;
+      min-height: 34px;
+    }
+
+    input[type="text"]::placeholder,
+    textarea::placeholder { color: #666; }
+    textarea { min-height: 48px; }
+
+    .rating-scale {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .rating-options {
+      display: flex;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    .rating-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.18s ease-out;
+      background: rgba(0,0,0,0.6);
+    }
+
+    .rating-dot input { display: none; }
+    .rating-dot span { pointer-events: none; }
+
+    .rating-dot:hover {
+      border-color: var(--accent);
+      background: rgba(201,162,139,0.15);
+      transform: translateY(-1px);
+    }
+
+    .rating-dot.active {
+      border-color: var(--accent);
+      background: radial-gradient(circle at top, rgba(201,162,139,0.95), rgba(201,162,139,0.10));
+      color: #111;
+      font-weight: 600;
+      box-shadow: 0 0 0 1px rgba(201,162,139,0.3);
+    }
+
+    .rating-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 4px;
+      border-top: 1px dashed rgba(255,255,255,0.08);
+      margin-top: 2px;
+    }
+
+    button {
+      border-radius: var(--radius-pill);
+      border: none;
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.16s ease-out;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #f3e0d4);
+      color: #1a1512;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.85);
+      filter: saturate(1.05);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: rgba(201,162,139,0.6);
+      color: var(--text);
+      background: rgba(201,162,139,0.08);
+    }
+
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: calc(100vh - 190px);
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .chart-card {
+      background: radial-gradient(circle at top left, rgba(201,162,139,0.12), rgba(7,7,7,0.98));
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .chart-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .chart-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 160px;
+    }
+
+    @media (max-width: 768px) {
+      .chart-wrapper { height: 200px; }
+    }
+
+    footer {
+      margin-top: 2px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: right;
+      opacity: 0.8;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.12);
+      border-radius: 999px;
+    }
+
+    /* Floating button */
+    .fab-dashboard {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 40;
+      border-radius: 999px;
+      border: 1px solid rgba(201,162,139,0.6);
+      background: radial-gradient(circle at top left, rgba(201,162,139,0.9), rgba(30,22,19,1));
+      color: #1a1512;
+      padding: 10px 18px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.8);
+    }
+
+    .fab-dashboard span.icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.15);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .fab-dashboard:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 22px 60px rgba(0,0,0,0.9);
+      filter: saturate(1.05);
+    }
+
+    /* Modal login */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease-out;
+    }
+
+    .modal-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: radial-gradient(circle at top, #1f1713, #050506);
+      border-radius: 22px;
+      border: 1px solid rgba(201,162,139,0.45);
+      padding: 22px 22px 18px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 24px 65px rgba(0,0,0,0.9);
+      color: var(--text);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .modal-subtitle {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .modal-close {
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: transparent;
+      color: var(--muted);
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .modal-close:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .modal-body label {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .modal-body input[type="text"],
+    .modal-body input[type="password"] {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.8);
+      color: var(--text);
+      font-size: 0.8rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .error-text {
+      font-size: 0.7rem;
+      color: var(--error);
+      min-height: 1em;
+    }
+
+    /* Panel derecho: wrapper con iframe + dashboard */
+    .kam-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .kam-frame-container {
+      flex: 1;
+      min-height: 260px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(201,162,139,0.35);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.8);
+    }
+
+    .kam-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    /* por defecto el dashboard no se ve, solo iframe */
+    #dashboardPanel { display: none; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <img src="SANARE_logo.png" alt="Sanaré Clínica de Infusión" class="brand-logo" />
+        <div class="brand-text">
+          <h1>SANARÉ</h1>
+          <p>Clínica de Infusión · Proyecto Comercial 2025–2026</p>
+        </div>
+      </div>
+      <div class="tag-pill">
+        <span>Encuesta a Médicos Referidores</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- Lado izquierdo: formulario -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Formulario interactivo</div>
+            <div class="card-subtitle">Responde las preguntas. El panel de resultados está protegido solo para Sanaré.</div>
+          </div>
+          <div class="pill-counter"><span id="responsesCount">0</span>&nbsp; respuestas totales</div>
+        </div>
+
+        <form id="surveyForm">
+          <!-- 1 -->
+          <div class="question" data-question="q1">
+            <small>Pregunta 1</small>
+            <div class="question-title">
+              ¿Qué características te hacen elegir un centro de infusión?
+              <span style="color: var(--accent); font-size:0.75rem;">(Selecciona una o varias)</span>
+            </div>
+            <div class="options">
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q1" value="Rapidez" />
+                <span class="option-label-text">Rapidez en la atención</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q1" value="Trato humano" />
+                <span class="option-label-text">Trato humano y acompañamiento</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q1" value="Procesos simples" />
+                <span class="option-label-text">Procesos administrativos simples</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q1" value="Precios claros" />
+                <span class="option-label-text">Precios claros y accesibles</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q1" value="Cercanía" />
+                <span class="option-label-text">Cercanía / ubicación</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q1" value="Disponibilidad" />
+                <span class="option-label-text">Disponibilidad de productos y horarios</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q1" value="Confianza personal clínico" />
+                <span class="option-label-text">Confianza en el personal clínico</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 2 -->
+          <div class="question" data-question="q2">
+            <small>Pregunta 2</small>
+            <div class="question-title">¿Cuáles han sido tus mejores experiencias en otros centros?</div>
+            <div class="options">
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q2" value="Comunicación y seguimiento" />
+                <span class="option-label-text">Comunicación constante y seguimiento</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q2" value="Atención cálida" />
+                <span class="option-label-text">Atención cálida al paciente</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q2" value="Procesos eficientes" />
+                <span class="option-label-text">Procesos eficientes y sin retrasos</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q2" value="Horarios flexibles" />
+                <span class="option-label-text">Flexibilidad en horarios</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q2" value="Apoyos económicos" />
+                <span class="option-label-text">Apoyos o beneficios económicos</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q2" value="Instalaciones" />
+                <span class="option-label-text">Instalaciones adecuadas y cómodas</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="question" data-question="q3">
+            <small>Pregunta 3</small>
+            <div class="question-title">¿Qué malas experiencias has tenido en otros centros?</div>
+            <div class="options">
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q3" value="Tiempos de espera largos" />
+                <span class="option-label-text">Tiempos de espera largos</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q3" value="Mala comunicación" />
+                <span class="option-label-text">Mala comunicación o falta de seguimiento</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q3" value="Problemas administrativos" />
+                <span class="option-label-text">Problemas administrativos</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q3" value="Errores en logística" />
+                <span class="option-label-text">Errores en programación o logística</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q3" value="Trato poco humano" />
+                <span class="option-label-text">Trato poco humano hacia el paciente</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q3" value="Costos elevados" />
+                <span class="option-label-text">Costos elevados sin claridad</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="question" data-question="q4">
+            <small>Pregunta 4</small>
+            <div class="question-title">¿Cuántos pacientes envías a infusión al mes?</div>
+            <div class="options">
+              <label class="option-pill">
+                <input type="radio" name="q4" value="1–3" />
+                <span class="option-label-text">1–3</span>
+              </label>
+              <label class="option-pill">
+                <input type="radio" name="q4" value="4–6" />
+                <span class="option-label-text">4–6</span>
+              </label>
+              <label class="option-pill">
+                <input type="radio" name="q4" value="7–10" />
+                <span class="option-label-text">7–10</span>
+              </label>
+              <label class="option-pill">
+                <input type="radio" name="q4" value="Más de 10" />
+                <span class="option-label-text">Más de 10</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="question" data-question="q5">
+            <small>Pregunta 5</small>
+            <div class="question-title">¿Qué tipos de terapias utilizas con mayor frecuencia?</div>
+            <div class="options">
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q5" value="Oncológicas" />
+                <span class="option-label-text">Oncológicas</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q5" value="Reumatológicas" />
+                <span class="option-label-text">Reumatológicas</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q5" value="Inmunológicas" />
+                <span class="option-label-text">Inmunológicas</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q5" value="Terapias dirigidas" />
+                <span class="option-label-text">Terapias dirigidas</span>
+              </label>
+            </div>
+            <div class="field-inline">
+              <input type="text" name="q5_other" placeholder="Otras (especificar)" />
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="question" data-question="q6">
+            <small>Pregunta 6</small>
+            <div class="question-title">¿Qué factores son decisivos al elegir un centro de infusión?</div>
+            <div class="options">
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q6" value="Calidad médica" />
+                <span class="option-label-text">Calidad médica</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q6" value="Trato al paciente" />
+                <span class="option-label-text">Trato al paciente</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q6" value="Velocidad del proceso" />
+                <span class="option-label-text">Velocidad y facilidad del proceso</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q6" value="Costos y apoyos" />
+                <span class="option-label-text">Costos / esquemas de apoyo</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q6" value="Cercanía" />
+                <span class="option-label-text">Cercanía</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q6" value="Experiencia previa" />
+                <span class="option-label-text">Experiencia previa con el centro</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 7 -->
+          <div class="question" data-question="q7">
+            <small>Pregunta 7</small>
+            <div class="question-title">¿Qué te gustaría que un centro de infusión ofreciera adicionalmente?</div>
+            <div class="options">
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q7" value="Acompañamiento administrativo" />
+                <span class="option-label-text">Mayor acompañamiento administrativo</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q7" value="Apoyo económico" />
+                <span class="option-label-text">Más esquemas de apoyo económico</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q7" value="Horarios flexibles" />
+                <span class="option-label-text">Horarios más flexibles</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q7" value="Mejor comunicación" />
+                <span class="option-label-text">Mejor comunicación y seguimiento</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="q7" value="Reportes clínicos" />
+                <span class="option-label-text">Reportes clínicos más completos</span>
+              </label>
+            </div>
+            <textarea name="q7_other" placeholder="Otra sugerencia que te gustaría agregar"></textarea>
+          </div>
+
+          <!-- 8 -->
+          <div class="question" data-question="q8">
+            <small>Pregunta 8</small>
+            <div class="question-title">¿Qué tan satisfecho estás actualmente con el centro al que refieres la mayoría de tus pacientes?</div>
+            <div class="rating-scale">
+              <span class="rating-label">Nada satisfecho</span>
+              <div class="rating-options" id="ratingOptions">
+                <label class="rating-dot">
+                  <input type="radio" name="q8" value="1" />
+                  <span>1</span>
+                </label>
+                <label class="rating-dot">
+                  <input type="radio" name="q8" value="2" />
+                  <span>2</span>
+                </label>
+                <label class="rating-dot">
+                  <input type="radio" name="q8" value="3" />
+                  <span>3</span>
+                </label>
+                <label class="rating-dot">
+                  <input type="radio" name="q8" value="4" />
+                  <span>4</span>
+                </label>
+                <label class="rating-dot">
+                  <input type="radio" name="q8" value="5" />
+                  <span>5</span>
+                </label>
+              </div>
+              <span class="rating-label">Muy satisfecho</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn-ghost" id="clearForm">Limpiar</button>
+            <button type="submit" class="btn-primary">
+              Guardar respuesta
+              <span>➜</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Lado derecho: iframe KAM + panel de resultados -->
+      <section class="card">
+        <!-- Vista por defecto: iframe con la página de KAM -->
+        <div class="kam-wrapper" id="kamWrapper">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Centros Sanaré · Vista KAM</div>
+              <div class="card-subtitle">Vista de referencia para médicos y pacientes (no muestra métricas internas).</div>
+            </div>
+          </div>
+          <div class="kam-frame-container">
+            <iframe
+              src="https://soporteti-desing.github.io/sanare-kam/"
+              class="kam-frame"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- Panel de resultados PROTEGIDO -->
+        <div id="dashboardPanel">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Panel de resultados</div>
+              <div class="card-subtitle">Resumen visual de las preferencias de los médicos (datos en vivo desde Firebase).</div>
+            </div>
+            <div class="pill-counter" id="lastUpdated">Sin datos aún</div>
+          </div>
+
+          <div class="dashboard">
+            <div class="dashboard-row">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">1. Razones para elegir un centro</div>
+                  <div class="chart-meta">Selección múltiple</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ1"></canvas>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">2. Mejores experiencias</div>
+                  <div class="chart-meta">Selección múltiple</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ2"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-row">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">3. Malas experiencias</div>
+                  <div class="chart-meta">Selección múltiple</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ3"></canvas>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">4. Pacientes enviados al mes</div>
+                  <div class="chart-meta">Distribución</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ4"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-row">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">5. Tipos de terapias</div>
+                  <div class="chart-meta">Selección múltiple</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ5"></canvas>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">6. Factores decisivos</div>
+                  <div class="chart-meta">Selección múltiple</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ6"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-row">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">7. Servicios adicionales deseados</div>
+                  <div class="chart-meta">Selección múltiple</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ7"></canvas>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">8. Nivel de satisfacción actual</div>
+                  <div class="chart-meta">Escala 1–5</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ8"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer>
+            Las respuestas se almacenan en Firebase Firestore (proyecto <strong>encuesta-sanare</strong>) y las gráficas se actualizan en vivo.
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <!-- Botón flotante para abrir el login del panel -->
+    <button class="fab-dashboard" id="openDashboardBtn" type="button">
+      <span class="icon">🔒</span>
+      Panel Sanaré
+    </button>
+
+    <!-- Modal de acceso -->
+    <div class="modal-backdrop" id="loginModal">
+      <div class="modal">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">Acceso al panel de resultados</div>
+            <div class="modal-subtitle">Solo personal autorizado de Sanaré puede ver las métricas.</div>
+          </div>
+          <button class="modal-close" type="button" id="closeModalBtn">Cerrar</button>
+        </div>
+        <div class="modal-body">
+          <div>
+            <label for="userField">Usuario</label>
+            <input type="text" id="userField" autocomplete="off" />
+          </div>
+          <div>
+            <label for="passField">Contraseña</label>
+            <input type="password" id="passField" />
+          </div>
+          <div class="error-text" id="loginError"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-ghost" type="button" id="cancelLoginBtn">Cancelar</button>
+          <button class="btn-primary" type="button" id="confirmLoginBtn">Entrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----- Firebase -----
+    const firebaseConfig = {
+      apiKey: "AIzaSyBju6s1bZCNQakcLltJE5jefHf-iWciO5w",
+      authDomain: "encuesta-sanare.firebaseapp.com",
+      projectId: "encuesta-sanare",
+      storageBucket: "encuesta-sanare.firebasestorage.app",
+      messagingSenderId: "201767412624",
+      appId: "1:201767412624:web:d868b0d8574520b7c2c915"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ----- Estadísticas en memoria -----
+    const initialStats = {
+      totalResponses: 0,
+      q1: {
+        'Rapidez': 0,
+        'Trato humano': 0,
+        'Procesos simples': 0,
+        'Precios claros': 0,
+        'Cercanía': 0,
+        'Disponibilidad': 0,
+        'Confianza personal clínico': 0,
+      },
+      q2: {
+        'Comunicación y seguimiento': 0,
+        'Atención cálida': 0,
+        'Procesos eficientes': 0,
+        'Horarios flexibles': 0,
+        'Apoyos económicos': 0,
+        'Instalaciones': 0,
+      },
+      q3: {
+        'Tiempos de espera largos': 0,
+        'Mala comunicación': 0,
+        'Problemas administrativos': 0,
+        'Errores en logística': 0,
+        'Trato poco humano': 0,
+        'Costos elevados': 0,
+      },
+      q4: {
+        '1–3': 0,
+        '4–6': 0,
+        '7–10': 0,
+        'Más de 10': 0,
+      },
+      q5: {
+        'Oncológicas': 0,
+        'Reumatológicas': 0,
+        'Inmunológicas': 0,
+        'Terapias dirigidas': 0,
+        'Otras': 0,
+      },
+      q6: {
+        'Calidad médica': 0,
+        'Trato al paciente': 0,
+        'Velocidad del proceso': 0,
+        'Costos y apoyos': 0,
+        'Cercanía': 0,
+        'Experiencia previa': 0,
+      },
+      q7: {
+        'Acompañamiento administrativo': 0,
+        'Apoyo económico': 0,
+        'Horarios flexibles': 0,
+        'Mejor comunicación': 0,
+        'Reportes clínicos': 0,
+        'Otra sugerencia': 0,
+      },
+      q8: {
+        '1': 0,
+        '2': 0,
+        '3': 0,
+        '4': 0,
+        '5': 0,
+      },
+      lastUpdated: null,
+    };
+
+    let stats = JSON.parse(JSON.stringify(initialStats));
+
+    const responsesCountEl = document.getElementById('responsesCount');
+    const lastUpdatedEl = document.getElementById('lastUpdated');
+
+    function updateMeta() {
+      responsesCountEl.textContent = stats.totalResponses || 0;
+      if (stats.lastUpdated && lastUpdatedEl) {
+        lastUpdatedEl.textContent = 'Actualizado: ' + stats.lastUpdated;
+      } else if (lastUpdatedEl) {
+        lastUpdatedEl.textContent = 'Sin datos aún';
+      }
+    }
+
+    // ----- Charts -----
+    Chart.register(ChartDataLabels);
+
+    const chartConfigs = {
+      q1: { canvasId: 'chartQ1', key: 'q1', type: 'bar', label: 'Respuestas' },
+      q2: { canvasId: 'chartQ2', key: 'q2', type: 'bar', label: 'Respuestas' },
+      q3: { canvasId: 'chartQ3', key: 'q3', type: 'bar', label: 'Respuestas' },
+      q4: { canvasId: 'chartQ4', key: 'q4', type: 'doughnut', label: 'Médicos' },
+      q5: { canvasId: 'chartQ5', key: 'q5', type: 'bar', label: 'Respuestas' },
+      q6: { canvasId: 'chartQ6', key: 'q6', type: 'bar', label: 'Respuestas' },
+      q7: { canvasId: 'chartQ7', key: 'q7', type: 'bar', label: 'Respuestas' },
+      q8: { canvasId: 'chartQ8', key: 'q8', type: 'bar', label: 'Médicos' },
+    };
+
+    const charts = {};
+
+    function createChart(config) {
+      const ctx = document.getElementById(config.canvasId);
+      if (!ctx) return null;
+
+      const questionStats = stats[config.key];
+      const labels = Object.keys(questionStats);
+      const data = Object.values(questionStats);
+      const isBar = config.type === 'bar';
+
+      const chart = new Chart(ctx, {
+        type: config.type,
+        data: {
+          labels,
+          datasets: [{
+            label: config.label,
+            data,
+            borderWidth: 1.2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: config.key === 'q4' || config.key === 'q8',
+              position: 'bottom',
+              labels: {
+                color: '#d8d8d8',
+                font: { size: 10 },
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const getVal = (raw) => {
+                    if (typeof raw === 'number') return raw;
+                    if (raw && typeof raw === 'object') {
+                      if (typeof raw.y === 'number') return raw.y;
+                      if (typeof raw.x === 'number') return raw.x;
+                    }
+                    return 0;
+                  };
+                  const rawValue = ctx.raw ?? ctx.parsed;
+                  const value = getVal(rawValue);
+                  const dataArr = ctx.dataset.data;
+                  const total = dataArr.reduce((a, b) => getVal(a) + getVal(b), 0) || 1;
+                  const pct = Math.round((value / total) * 100);
+                  return `${ctx.label}: ${value} respuesta${value === 1 ? '' : 's'} (${pct}%)`;
+                },
+              },
+            },
+            datalabels: {
+              color: '#ffffff',
+              anchor: 'end',
+              align: 'end',
+              offset: -4,
+              font: { size: 10, weight: '600' },
+              formatter: (value, context) => {
+                const getVal = (raw) => {
+                  if (typeof raw === 'number') return raw;
+                  if (raw && typeof raw === 'object') {
+                    if (typeof raw.y === 'number') return raw.y;
+                    if (typeof raw.x === 'number') return raw.x;
+                  }
+                  return 0;
+                };
+                const v = getVal(value);
+                if (!v) return '';
+                const dataArr = context.dataset.data;
+                const total = dataArr.reduce((a, b) => getVal(a) + getVal(b), 0) || 1;
+                const pct = Math.round((v / total) * 100);
+                return `${v} (${pct}%)`;
+              },
+            },
+          },
+          scales: isBar ? {
+            x: {
+              ticks: { color: '#d8d8d8', font: { size: 9 } },
+              grid: { color: 'rgba(255,255,255,0.05)' },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, color: '#d8d8d8', font: { size: 9 } },
+              grid: { color: 'rgba(255,255,255,0.05)' },
+            },
+          } : {},
+        },
+      });
+      return chart;
+    }
+
+    function initCharts() {
+      Object.values(chartConfigs).forEach(cfg => {
+        charts[cfg.key] = createChart(cfg);
+      });
+    }
+
+    function updateCharts() {
+      Object.values(chartConfigs).forEach(cfg => {
+        const chart = charts[cfg.key];
+        if (!chart) return;
+        const questionStats = stats[cfg.key];
+        chart.data.labels = Object.keys(questionStats);
+        chart.data.datasets[0].data = Object.values(questionStats);
+        chart.update();
+      });
+    }
+
+    // ----- Lectura en vivo desde Firestore -----
+    function recomputeStatsFromSnapshot(snapshot) {
+      stats = JSON.parse(JSON.stringify(initialStats));
+      let latestDate = null;
+
+      snapshot.forEach(doc => {
+        const d = doc.data() || {};
+
+        const addArray = (field, key) => {
+          const arr = d[field];
+          if (!Array.isArray(arr)) return;
+          arr.forEach(v => {
+            if (stats[key][v] !== undefined) {
+              stats[key][v] += 1;
+            }
+          });
+        };
+
+        addArray('q1', 'q1');
+        addArray('q2', 'q2');
+        addArray('q3', 'q3');
+        addArray('q5', 'q5');
+        addArray('q6', 'q6');
+        addArray('q7', 'q7');
+
+        if (d.q4 && stats.q4[d.q4] !== undefined) {
+          stats.q4[d.q4] += 1;
+        }
+
+        if (d.q5_other) {
+          stats.q5['Otras'] += 1;
+        }
+
+        if (d.q7_other) {
+          stats.q7['Otra sugerencia'] += 1;
+        }
+
+        if (d.q8 && stats.q8[d.q8] !== undefined) {
+          stats.q8[d.q8] += 1;
+        }
+
+        const ts = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate() : null;
+        if (ts && (!latestDate || ts > latestDate)) {
+          latestDate = ts;
+        }
+      });
+
+      stats.totalResponses = snapshot.size;
+
+      if (latestDate) {
+        stats.lastUpdated = latestDate.toLocaleString('es-MX', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      } else {
+        stats.lastUpdated = null;
+      }
+
+      updateMeta();
+      updateCharts();
+    }
+
+    function subscribeToFirestore() {
+      db.collection('respuestas')
+        .orderBy('createdAt', 'asc')
+        .onSnapshot(recomputeStatsFromSnapshot, (error) => {
+          console.error('Error escuchando respuestas:', error);
+        });
+    }
+
+    // ----- Envío del formulario (guardar en Firestore) -----
+    async function handleSubmit(event) {
+      event.preventDefault();
+      const form = event.target;
+
+      const getArray = (name) => Array.from(
+        form.querySelectorAll(`input[name="${name}"]:checked`)
+      ).map(i => i.value);
+
+      const payload = {
+        q1: getArray('q1'),
+        q2: getArray('q2'),
+        q3: getArray('q3'),
+        q4: form.querySelector('input[name="q4"]:checked')?.value || null,
+        q5: getArray('q5'),
+        q5_other: form.q5_other.value.trim() || null,
+        q6: getArray('q6'),
+        q7: getArray('q7'),
+        q7_other: form.q7_other.value.trim() || null,
+        q8: form.querySelector('input[name="q8"]:checked')?.value || null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      try {
+        await db.collection('respuestas').add(payload);
+      } catch (err) {
+        console.error('Error guardando respuesta en Firestore:', err);
+        alert('Ocurrió un error al guardar la respuesta. Intenta de nuevo.');
+        return;
+      }
+
+      form.reset();
+      document.querySelectorAll('.rating-dot').forEach(el => el.classList.remove('active'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearFormOnly() {
+      const form = document.getElementById('surveyForm');
+      form.reset();
+      document.querySelectorAll('.rating-dot').forEach(el => el.classList.remove('active'));
+    }
+
+    function initRatingDots() {
+      const container = document.getElementById('ratingOptions');
+      container.addEventListener('click', (e) => {
+        const label = e.target.closest('.rating-dot');
+        if (!label) return;
+        const input = label.querySelector('input');
+        if (!input) return;
+        input.checked = true;
+        document.querySelectorAll('.rating-dot').forEach(el => el.classList.remove('active'));
+        label.classList.add('active');
+      });
+    }
+
+    // ----- Login / visibilidad del dashboard -----
+    const DASHBOARD_USER = "sanare";
+    const DASHBOARD_PASS = "2025";
+
+    const dashboardPanel = document.getElementById('dashboardPanel');
+    const kamWrapper = document.getElementById('kamWrapper');
+    const openDashboardBtn = document.getElementById('openDashboardBtn');
+    const loginModal = document.getElementById('loginModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelLoginBtn = document.getElementById('cancelLoginBtn');
+    const confirmLoginBtn = document.getElementById('confirmLoginBtn');
+    const userField = document.getElementById('userField');
+    const passField = document.getElementById('passField');
+    const loginError = document.getElementById('loginError');
+
+    function showModal() {
+      loginModal.classList.add('visible');
+      loginError.textContent = '';
+      userField.value = '';
+      passField.value = '';
+      setTimeout(() => userField.focus(), 40);
+    }
+
+    function hideModal() {
+      loginModal.classList.remove('visible');
+    }
+
+    function unlockDashboard() {
+      if (kamWrapper) kamWrapper.style.display = 'none';
+      if (dashboardPanel) dashboardPanel.style.display = 'block';
+      if (openDashboardBtn) openDashboardBtn.style.display = 'none';
+    }
+
+    function handleLogin() {
+      const u = userField.value.trim();
+      const p = passField.value.trim();
+      if (u === DASHBOARD_USER && p === DASHBOARD_PASS) {
+        hideModal();
+        unlockDashboard();
+      } else {
+        loginError.textContent = 'Usuario o contraseña incorrectos.';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initCharts();
+      updateMeta();
+      initRatingDots();
+      subscribeToFirestore();
+
+      const form = document.getElementById('surveyForm');
+      form.addEventListener('submit', handleSubmit);
+      document.getElementById('clearForm').addEventListener('click', clearFormOnly);
+
+      openDashboardBtn.addEventListener('click', showModal);
+      closeModalBtn.addEventListener('click', hideModal);
+      cancelLoginBtn.addEventListener('click', hideModal);
+      confirmLoginBtn.addEventListener('click', handleLogin);
+      passField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleLogin();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
