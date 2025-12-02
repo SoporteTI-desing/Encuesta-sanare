@@ -613,6 +613,21 @@
         </div>
 
         <form id="surveyForm">
+          <!-- Datos de identificación -->
+          <div class="question">
+            <small>Datos de identificación</small>
+            <div class="question-title">
+              Nombre del médico o persona que registra
+            </div>
+            <div class="field-inline">
+              <input
+                type="text"
+                name="nombre_registro"
+                placeholder="Escribe el nombre completo"
+              />
+            </div>
+          </div>
+
           <!-- 1 -->
           <div class="question" data-question="q1">
             <small>Pregunta 1</small>
@@ -860,6 +875,41 @@
             </div>
           </div>
 
+
+          <!-- 9 -->
+          <div class="question">
+            <small>Pregunta 9</small>
+            <div class="question-title">
+              ¿Qué aseguradoras maneja con más frecuencia entre sus pacientes?
+              <span style="color: var(--accent); font-size:0.75rem;">(Selecciona una o varias)</span>
+            </div>
+            <div class="options">
+              <label class="option-pill multiple">
+                <input type="checkbox" name="aseguradoras" value="MetLife" />
+                <span class="option-label-text">MetLife</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="aseguradoras" value="GNP" />
+                <span class="option-label-text">GNP</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="aseguradoras" value="AXXA" />
+                <span class="option-label-text">AXXA</span>
+              </label>
+              <label class="option-pill multiple">
+                <input type="checkbox" name="aseguradoras" value="BANCOS" />
+                <span class="option-label-text">BANCOS</span>
+              </label>
+            </div>
+            <div class="field-inline">
+              <input
+                type="text"
+                name="aseguradoras_otro"
+                placeholder="Otro: especificar"
+              />
+            </div>
+          </div>
+
           <div class="actions">
             <button type="button" class="btn-ghost" id="clearForm">Limpiar</button>
             <button type="submit" class="btn-primary">
@@ -986,7 +1036,19 @@
             </div>
           </div>
 
-          <footer>
+          
+            <div class="dashboard-row">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">9. Aseguradoras más frecuentes</div>
+                  <div class="chart-meta">Selección múltiple</div>
+                </div>
+                <div class="chart-wrapper">
+                  <canvas id="chartQ9"></canvas>
+                </div>
+              </div>
+            </div>
+<footer>
             Las respuestas se almacenan en Firebase Firestore (proyecto <strong>encuesta-sanare</strong>) y las gráficas se actualizan en vivo.
           </footer>
         </div>
@@ -1106,6 +1168,13 @@
         '4': 0,
         '5': 0,
       },
+      q9: {
+        'MetLife': 0,
+        'GNP': 0,
+        'AXXA': 0,
+        'BANCOS': 0,
+        'Otro': 0,
+      },
       lastUpdated: null,
     };
 
@@ -1135,6 +1204,7 @@
       q6: { canvasId: 'chartQ6', key: 'q6', type: 'bar', label: 'Respuestas' },
       q7: { canvasId: 'chartQ7', key: 'q7', type: 'bar', label: 'Respuestas' },
       q8: { canvasId: 'chartQ8', key: 'q8', type: 'bar', label: 'Médicos' },
+      q9: { canvasId: 'chartQ9', key: 'q9', type: 'bar', label: 'Médicos' },
     };
 
     const charts = {};
@@ -1271,6 +1341,7 @@
         addArray('q5', 'q5');
         addArray('q6', 'q6');
         addArray('q7', 'q7');
+        addArray('aseguradoras', 'q9');
 
         if (d.q4 && stats.q4[d.q4] !== undefined) {
           stats.q4[d.q4] += 1;
@@ -1282,6 +1353,10 @@
 
         if (d.q7_other) {
           stats.q7['Otra sugerencia'] += 1;
+        }
+
+        if (d.aseguradoras_otro) {
+          stats.q9['Otro'] += 1;
         }
 
         if (d.q8 && stats.q8[d.q8] !== undefined) {
@@ -1330,6 +1405,7 @@
       ).map(i => i.value);
 
       const payload = {
+        nombre_registro: form.nombre_registro?.value.trim() || null,
         q1: getArray('q1'),
         q2: getArray('q2'),
         q3: getArray('q3'),
@@ -1340,6 +1416,8 @@
         q7: getArray('q7'),
         q7_other: form.q7_other.value.trim() || null,
         q8: form.querySelector('input[name="q8"]:checked')?.value || null,
+        aseguradoras: getArray('aseguradoras'),
+        aseguradoras_otro: form.aseguradoras_otro?.value.trim() || null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
 
